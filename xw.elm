@@ -4,7 +4,7 @@ import Char
 
 side = 30
 n = 15
-x0 = side * n
+gridSize = side * n
 
 -- model
 
@@ -26,9 +26,12 @@ lastKey : Signal Char
 lastKey = Char.toUpper <~ (Char.fromCode <~ Keyboard.lastPressed)
 
 -- coordinates
-toScreen (x, y) = (side * x - x0, side * (n - y))
-fromScreen (x, y) = (div (x + x0) side, n - div y side)
-centre = toScreen (n `div` 2 + 1, n `div` 2 + 1)
+
+toScreen : (Int, Int) -> (Int, Int)
+toScreen (x, y) = (side * (x - 1), side * (y - 1))
+
+fromScreen : (Int, Int) -> (Int, Int)
+fromScreen (x, y) = (1 + div x side, 1 + div y side)
 
 -- square
 
@@ -64,20 +67,20 @@ drawCursor = container side side middle (plainText " ") |> color green |> opacit
 sq : Grid -> Int -> Int -> Element
 sq grid x y = drawSquare <| getSq grid x y
 
-renderCursor : Cursor -> Form
+renderCursor : Cursor -> Element
 renderCursor cursor =
   let (px, py) = toScreen cursor
-  in  drawCursor |> toForm |> move (px, py)
+  in container gridSize gridSize (topLeftAt (absolute px) (absolute py)) drawCursor
 
 drawGrid : Grid -> Element
 drawGrid grid =
   flow right <| map (\x -> flow down <| map (sq grid x) [1 .. n]) [1 .. n]
 
-renderGrid : Grid -> Form
-renderGrid grid = drawGrid grid |> toForm |> move centre
+renderGrid : Grid -> Element
+renderGrid grid = container gridSize gridSize topLeft <| drawGrid grid
 
-renderAll : State -> [Form]
-renderAll state = [renderGrid state.grid, renderCursor state.cursor]
+renderAll : State -> Element
+renderAll state = layers [renderGrid state.grid, renderCursor state.cursor]
 
 addKey : Char -> Grid
 addKey key = Dict.insert (5, 5) (White key) defaultGrid
@@ -87,5 +90,4 @@ main =
       cursor0 = constant (1, 3)
       state = lift2 createState grid0 cursor0
       rendered = lift renderAll state
-  in
-  lift (collage 1200 1200) rendered
+  in lift (container (gridSize + 60) (gridSize + 60) middle) rendered
