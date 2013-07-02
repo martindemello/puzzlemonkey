@@ -28,6 +28,7 @@ lastKey = Char.toUpper <~ (Char.fromCode <~ Keyboard.lastPressed)
 -- coordinates
 toScreen (x, y) = (side * x - x0, side * (n - y))
 fromScreen (x, y) = (div (x + x0) side, n - div y side)
+centre = toScreen (n `div` 2 + 1, n `div` 2 + 1)
 
 -- square
 
@@ -46,39 +47,44 @@ getSq grid x y =
     Just s -> s
     Nothing -> White ' '
 
-sqr : Color -> Char -> Element
-sqr c l = collage side side [
-             square side |> filled c
-           , square side |> outlined (solid black)
-           , plainText [l] |> toForm
-          ]
+border : Element -> Element
+border e =
+  let iside = side - 1
+      inner = container iside iside middle e |> color white
+  in container side side middle inner |> color black
 
-renderCell : Square -> Element
-renderCell square = sqr (sqColor square) (sqLetter square)
+drawSquare : Square -> Element
+drawSquare s = case s of
+  Black -> container side side middle (plainText "#") |> color black
+  White c -> border (plainText [c])
 
-crsr = opacity 0.5 <| collage side side [ square side |> filled green ]
+drawCursor : Element
+drawCursor = container side side middle (plainText " ") |> color green |> opacity 0.5
 
-sq grid x y =
-  let (px, py) = toScreen (x, y)
-      cell = getSq grid x y
-  in renderCell cell |> toForm |> move (px, py)
+sq : Grid -> Int -> Int -> Element
+sq grid x y = drawSquare <| getSq grid x y
 
-renderCursor state =
-  let (px, py) = toScreen state.cursor
-  in  crsr |> toForm |> move (px, py)
+renderCursor : Cursor -> Form
+renderCursor cursor =
+  let (px, py) = toScreen cursor
+  in  drawCursor |> toForm |> move (px, py)
 
-renderGrid state =
-  concatMap (\x -> map (sq state.grid x) [1 .. n]) [1 .. n]
+drawGrid : Grid -> Element
+drawGrid grid =
+  flow right <| map (\x -> flow down <| map (sq grid x) [1 .. n]) [1 .. n]
+
+renderGrid : Grid -> Form
+renderGrid grid = drawGrid grid |> toForm |> move centre
 
 renderAll : State -> [Form]
-renderAll state = concat [renderGrid state, [renderCursor state]]
+renderAll state = [renderGrid state.grid, renderCursor state.cursor]
 
 addKey : Char -> Grid
 addKey key = Dict.insert (5, 5) (White key) defaultGrid
 
 main =
   let grid0 = lift addKey lastKey
-      cursor0 = constant (2, 2)
+      cursor0 = constant (1, 3)
       state = lift2 createState grid0 cursor0
       rendered = lift renderAll state
   in
