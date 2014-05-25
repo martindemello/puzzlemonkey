@@ -9,7 +9,7 @@ gridSize = side * n
 -- model
 
 data Square = Black | White Char
-type Grid = Dict (Int, Int) Square
+type Grid = Dict.Dict (Int, Int) Square
 type Cursor = (Int, Int)
 type State = { grid: Grid, cursor: Cursor }
 
@@ -46,7 +46,7 @@ sqLetter s = case s of
 -- grid
 
 getSq grid x y =
-  case (Dict.lookup (x, y) grid) of
+  case (Dict.get (x, y) grid) of
     Just s -> s
     Nothing -> White ' '
 
@@ -59,7 +59,7 @@ border e =
 drawSquare : Square -> Element
 drawSquare s = case s of
   Black -> container side side middle (plainText "#") |> color black
-  White c -> border (plainText [c])
+  White c -> border (plainText (String.fromList [c]))
 
 drawCursor : Element
 drawCursor = container side side middle (plainText " ") |> color green |> opacity 0.5
