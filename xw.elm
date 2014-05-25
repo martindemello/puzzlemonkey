@@ -43,6 +43,16 @@ sqLetter s = case s of
                Black -> '#'
                White c -> c
 
+
+-- test please ignore
+colorOf c = case c of
+  'A' -> black
+  'B' -> red
+  'C' -> green
+  'D' -> blue
+  ' ' -> white
+  _   -> orange
+
 -- grid
 
 getSq grid x y =
@@ -59,7 +69,7 @@ border e =
 drawSquare : Square -> Element
 drawSquare s = case s of
   Black -> container side side middle (plainText "#")
-  White c -> let contents = plainText (String.fromList [c])
+  White c -> let contents = container 15 15 middle empty |> color (colorOf c) -- plainText (String.fromList [c])
              in border contents 
 
 drawCursor : Element
