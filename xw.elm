@@ -52,14 +52,15 @@ getSq grid x y =
 
 border : Element -> Element
 border e =
-  let iside = side - 1
+  let iside = side - 2
       inner = container iside iside middle e |> color white
-  in container side side middle inner |> color black
+  in container side side middle inner
 
 drawSquare : Square -> Element
 drawSquare s = case s of
-  Black -> container side side middle (plainText "#") |> color black
-  White c -> border (plainText (String.fromList [c]))
+  Black -> container side side middle (plainText "#")
+  White c -> let contents = plainText (String.fromList [c])
+             in border contents 
 
 drawCursor : Element
 drawCursor = container side side middle (plainText " ") |> color green |> opacity 0.5
@@ -77,7 +78,7 @@ drawGrid grid =
   flow right <| map (\x -> flow down <| map (sq grid x) [1 .. n]) [1 .. n]
 
 renderGrid : Grid -> Element
-renderGrid grid = container gridSize gridSize topLeft <| drawGrid grid
+renderGrid grid = container gridSize gridSize topLeft (drawGrid grid) |> color black
 
 renderAll : State -> Element
 renderAll state = layers [renderGrid state.grid, renderCursor state.cursor]
